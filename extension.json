@@ -1,0 +1,13 @@
+{
+  "name": "XpressNet",
+  "apiVersion": "1.0.0",
+  "author": "Sebastian Knackstedt",
+  "version": "0.0.1",
+  "description": "This extension provides support for XpressNet, a communication protocol in model railroads.",
+  "extensions": {
+    "XpressNet": {
+      "type": "HighLevelAnalyzer",
+      "entryPoint": "HighLevelAnalyzer.Hla"
+    }
+  }
+}

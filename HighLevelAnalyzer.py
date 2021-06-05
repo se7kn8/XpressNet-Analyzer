@@ -65,6 +65,12 @@ class Hla(HighLevelAnalyzer):
         'service_mode_entry': {
             'format': 'Service Mode Entry'
         },
+        'acknowledgment_response': {
+            'format': "Acknowledgment Response"
+        },
+        'operation_request': {
+            'format': "Operation request: {{data.type}}"
+        },
     }
 
     address = 0
@@ -72,11 +78,17 @@ class Hla(HighLevelAnalyzer):
     has_header = False
     started_with_call_byte = False
     start_time = 0
+    end_time = 0
     packet_size = 0
 
     packet_data = []
+    header_map = {}
 
     def __init__(self):
+        self.header_map = {
+            0x20: self.acknowledgment_response,
+            0x21: self.operation_request,
+        }
         pass
 
     # TODO add checks for parity and xor
@@ -123,14 +135,28 @@ class Hla(HighLevelAnalyzer):
                     # Packet is complete
                     self.has_header = False
                     self.in_packet = False
-                    general_broadcast = self.handle_general_broadcast(frame)
+                    self.end_time = frame.end_time
+                    general_broadcast = self.handle_general_broadcast()
                     if general_broadcast:
                         return general_broadcast
+
+                    # Check in header map
+                    print(hex(self.packet_data[0]))
+                    if self.packet_data[0] in self.header_map:
+                        # Get and invoke the function
+                        packet_fun = self.header_map[self.packet_data[0]]
+                        packet = packet_fun()
+                        # Return the packet if there is some
+                        if packet:
+                            return packet
 
                     return AnalyzerFrame("unknown", self.start_time, frame.end_time)
             # This should be always a header packet
             else:
+                # Clear old packet data
                 self.packet_data = []
+                # Append the current header
+                self.packet_data.append(data)
                 self.packet_size = get_packet_size(data)
                 self.has_header = True
                 self.in_packet = True
@@ -149,18 +175,28 @@ class Hla(HighLevelAnalyzer):
             return AnalyzerFrame("request_acknowledgment", frame.start_time, frame.end_time, {"address": self.address})
         return None
 
-    def handle_general_broadcast(self, frame):
+    def handle_general_broadcast(self):
         # General broadcast packet have always three bytes after the call byte
         if self.started_with_call_byte:
             # Normal operation resumed packet
             if self.packet_data[0] == 0x61 and self.packet_data[1] == 0x01:
-                return AnalyzerFrame("normal_operation_resumed", self.start_time, frame.end_time)
+                return AnalyzerFrame("normal_operation_resumed", self.start_time, self.end_time)
             # Track power off packet
             elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x00:
-                return AnalyzerFrame("track_power_off", self.start_time, frame.end_time)
+                return AnalyzerFrame("track_power_off", self.start_time, self.end_time)
             # Emergency stop packet
             elif self.packet_data[0] == 0x81 and self.packet_data[1] == 0x00:
-                return AnalyzerFrame("emergency_stop", self.start_time, frame.end_time)
+                return AnalyzerFrame("emergency_stop", self.start_time, self.end_time)
             # Service mode entry packet
             elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x02:
-                return AnalyzerFrame("service_mode_entry", self.start_time, frame.end_time)
+                return AnalyzerFrame("service_mode_entry", self.start_time, self.end_time)
+
+    def acknowledgment_response(self):
+        return AnalyzerFrame("acknowledgment_response", self.start_time, self.end_time)
+
+    def operation_request(self):
+        # Resume operation request
+        if self.packet_data[1] == 0x81:
+            return AnalyzerFrame("operation_request", self.start_time, self.end_time, {"type": "Resume"})
+        elif self.packet_data[1] == 0x80:
+            return AnalyzerFrame("operation_request", self.start_time, self.end_time, {"type": "Emergency Stop"})

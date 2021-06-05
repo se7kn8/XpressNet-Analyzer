@@ -39,9 +39,9 @@ _* = Multiple packages of the same type_
 ### From device to command station
 |Name|Type|Implemented|
 |----|----|:---------:|
-|Acknowledgment Response|Response||
-|Resume operations|Request||
-|Stop operations|Request||
+|Acknowledgment Response|Response|X|
+|Resume operations|Request|X|
+|Stop operations|Request|X|
 |Stop all locomotives|Request||
 |Emergency stop a locomotive|?||
 |Register Mode read|Request||

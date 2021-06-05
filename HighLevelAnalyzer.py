@@ -44,8 +44,8 @@ class Hla(HighLevelAnalyzer):
         'non_callbyte': {
             'format': 'Non Callbyte'
         },
-        'special': {
-            'format': 'Special'
+        'unknown': {
+            'format': 'Unknown'
         },
         'normal_inquiry': {
             'format': 'Normal inquiry to {{data.address}}'
@@ -70,6 +70,7 @@ class Hla(HighLevelAnalyzer):
     address = 0
     in_packet = False
     has_header = False
+    started_with_call_byte = False
     start_time = 0
     packet_size = 0
 
@@ -102,13 +103,16 @@ class Hla(HighLevelAnalyzer):
                 self.packet_data = []
                 self.in_packet = True
                 self.has_header = False
+                self.started_with_call_byte = True
                 self.start_time = frame.start_time
 
             # TODO handle feedback
             return AnalyzerFrame("callbyte", frame.start_time, frame.end_time)
         else:
+            # A header or callbyte has already been received
             if self.in_packet:
                 self.packet_data.append(data)
+                # Only a callbyte has received but not a header
                 if not self.has_header:
                     # Read header and packet size
                     self.has_header = True
@@ -122,9 +126,17 @@ class Hla(HighLevelAnalyzer):
                     general_broadcast = self.handle_general_broadcast(frame)
                     if general_broadcast:
                         return general_broadcast
-                    return AnalyzerFrame("special", self.start_time, frame.end_time)
 
-            # Read the header
+                    return AnalyzerFrame("unknown", self.start_time, frame.end_time)
+            # This should be always a header packet
+            else:
+                self.packet_data = []
+                self.packet_size = get_packet_size(data)
+                self.has_header = True
+                self.in_packet = True
+                self.started_with_call_byte = False
+                self.start_time = frame.start_time
+                return
 
             # TODO handle device to command station
             return AnalyzerFrame("non_callbyte", frame.start_time, frame.end_time)
@@ -138,15 +150,17 @@ class Hla(HighLevelAnalyzer):
         return None
 
     def handle_general_broadcast(self, frame):
-        # Normal operation resumed packet
-        if self.packet_data[0] == 0x61 and self.packet_data[1] == 0x01:
-            return AnalyzerFrame("normal_operation_resumed", self.start_time, frame.end_time)
-        # Track power off packet
-        elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x00:
-            return AnalyzerFrame("track_power_off", self.start_time, frame.end_time)
-        # Emergency stop packet
-        elif self.packet_data[0] == 0x81 and self.packet_data[1] == 0x00:
-            return AnalyzerFrame("emergency_stop", self.start_time, frame.end_time)
-        # Service mode entry packet
-        elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x02:
-            return AnalyzerFrame("service_mode_entry", self.start_time, frame.end_time)
+        # General broadcast packet have always three bytes after the call byte
+        if self.started_with_call_byte:
+            # Normal operation resumed packet
+            if self.packet_data[0] == 0x61 and self.packet_data[1] == 0x01:
+                return AnalyzerFrame("normal_operation_resumed", self.start_time, frame.end_time)
+            # Track power off packet
+            elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x00:
+                return AnalyzerFrame("track_power_off", self.start_time, frame.end_time)
+            # Emergency stop packet
+            elif self.packet_data[0] == 0x81 and self.packet_data[1] == 0x00:
+                return AnalyzerFrame("emergency_stop", self.start_time, frame.end_time)
+            # Service mode entry packet
+            elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x02:
+                return AnalyzerFrame("service_mode_entry", self.start_time, frame.end_time)

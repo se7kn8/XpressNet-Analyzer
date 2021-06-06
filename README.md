@@ -4,6 +4,8 @@ A high level logic analyzer for Saleae Logic 2.
 
 This extension provides support for XpressNet 3.0 a protocol by Lenz which is a protocol used in model railroads for communication.
 
+All packets are based on this documentation: [Link](https://wiki.rocrail.net/lib/exe/fetch.php?media=xpressnet:xpressnet-v2.pdf)
+
 This analyzer is not complete, the table shows the current progress
 
 
@@ -26,7 +28,7 @@ _* = Multiple packages of the same type_
 |Transfer Errors|Response||
 |Command station busy response|Response||
 |Instruction not supported|Response||
-|Accessory Decoder information|Response||
+|Accessory Decoder information|Response|X|
 |Locomotive information *|Response||
 |Locomotive is being operated|Response||
 |Function status|Response||
@@ -36,7 +38,7 @@ _* = Multiple packages of the same type_
 
 
 
-### From device to command station
+### From device to command station:
 |Name|Type|Implemented|
 |----|----|:---------:|
 |Acknowledgment Response|Response|X|
@@ -54,8 +56,8 @@ _* = Multiple packages of the same type_
 |Command station software version|Request||
 |Command station status|Request||
 |Set command station power-up mode|?||
-|Accessory Decoder information|Request||
-|Accessory Decoder operation|Request||
+|Accessory Decoder information|Request|X|
+|Accessory Decoder operation|Request|X|
 |Locomotive information|Request||
 |Function status|Request||
 |Locomotive speed and direction|Instructions||
@@ -71,6 +73,9 @@ _* = Multiple packages of the same type_
 |Address inquiry locomotive at command station|Request||
 |Delete locomotive from command station stack|Request||
 
-
+###TODOs:
+ - Allow enabling/disabling normal inquiries
+ - Allow setting the accessory decoder address format (turnout, switching decoder, feedback module)
+ - Handle other accessory decoders than switching decoders
 
 

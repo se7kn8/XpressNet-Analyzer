@@ -35,14 +35,23 @@ def get_packet_size(header):
     return (header & 0b1111) + 1
 
 
+def get_turnout_state(flags):
+    if flags == 0b00:
+        return "Not yet controlled"
+    elif flags == 0b01:
+        return "Turned"
+    elif flags == 0b10:
+        return "Straight"
+    elif flags == 0b11:
+        return "Invalid"
+
+
 # High level analyzers must subclass the HighLevelAnalyzer class.
 class Hla(HighLevelAnalyzer):
     result_types = {
+        # Special packets
         'callbyte': {
             'format': 'Callbyte'
-        },
-        'non_callbyte': {
-            'format': 'Non Callbyte'
         },
         'unknown': {
             'format': 'Unknown'
@@ -65,11 +74,24 @@ class Hla(HighLevelAnalyzer):
         'service_mode_entry': {
             'format': 'Service Mode Entry'
         },
+
+        # Device to station packets
         'acknowledgment_response': {
             'format': "Acknowledgment Response"
         },
         'operation_request': {
             'format': "Operation request: {{data.type}}"
+        },
+        'accessory_decoder_information_request': {
+            'format': "Accessory Decoder request. Addresses={{data.addresses}}"
+        },
+        'accessory_decoder_operation_request': {
+            'format': "Accessory Operation request. Address={{data.address}}, Output={{data.output}}/{{data.output_state}}"
+        },
+
+        # Station to device packets
+        'accessory_decoder_information_response': {
+            'format': "Accessory Decoder response. Type={{data.type}} Addresses={{data.addresses}} {{data.extra}}"
         },
     }
 
@@ -82,12 +104,18 @@ class Hla(HighLevelAnalyzer):
     packet_size = 0
 
     packet_data = []
-    header_map = {}
+    client_header_map = {}
+    station_header_map = {}
 
     def __init__(self):
-        self.header_map = {
+        self.client_header_map = {
             0x20: self.acknowledgment_response,
             0x21: self.operation_request,
+            0x42: self.accessory_decoder_information_request,
+            0x52: self.accessory_decoder_operation_request,
+        }
+        self.station_header_map = {
+            0x42: self.accessory_decoder_information_response,
         }
         pass
 
@@ -117,8 +145,9 @@ class Hla(HighLevelAnalyzer):
                 self.has_header = False
                 self.started_with_call_byte = True
                 self.start_time = frame.start_time
+                # This is a start of a new packet so don't return something
+                return
 
-            # TODO handle feedback
             return AnalyzerFrame("callbyte", frame.start_time, frame.end_time)
         else:
             # A header or callbyte has already been received
@@ -140,17 +169,29 @@ class Hla(HighLevelAnalyzer):
                     if general_broadcast:
                         return general_broadcast
 
-                    # Check in header map
-                    print(hex(self.packet_data[0]))
-                    if self.packet_data[0] in self.header_map:
+                    # Check in client header map
+                    # Device to Station packets don't have callbytes
+                    if (not self.started_with_call_byte) and self.packet_data[0] in self.client_header_map:
                         # Get and invoke the function
-                        packet_fun = self.header_map[self.packet_data[0]]
+                        packet_fun = self.client_header_map[self.packet_data[0]]
+                        packet = packet_fun()
+                        # Return the packet if there is some
+                        if packet:
+                            return packet
+                    # Check in station header map
+                    # Station to device packets have callbytes
+                    elif self.started_with_call_byte and self.packet_data[0] in self.station_header_map:
+                        # Get and invoke the function
+                        packet_fun = self.station_header_map[self.packet_data[0]]
                         packet = packet_fun()
                         # Return the packet if there is some
                         if packet:
                             return packet
 
                     return AnalyzerFrame("unknown", self.start_time, frame.end_time)
+                else:
+                    # Packet is not complete, don't return anything
+                    return
             # This should be always a header packet
             else:
                 # Clear old packet data
@@ -163,9 +204,6 @@ class Hla(HighLevelAnalyzer):
                 self.started_with_call_byte = False
                 self.start_time = frame.start_time
                 return
-
-            # TODO handle device to command station
-            return AnalyzerFrame("non_callbyte", frame.start_time, frame.end_time)
 
     def handle_special_case(self, data, frame: AnalyzerFrame):
         # There are two special cases that need to be handled
@@ -200,3 +238,62 @@ class Hla(HighLevelAnalyzer):
             return AnalyzerFrame("operation_request", self.start_time, self.end_time, {"type": "Resume"})
         elif self.packet_data[1] == 0x80:
             return AnalyzerFrame("operation_request", self.start_time, self.end_time, {"type": "Emergency Stop"})
+
+    def accessory_decoder_information_request(self):
+        group = self.packet_data[1]
+        address_start = group * 4
+        nibble = self.packet_data[2] & 0b1
+
+        addresses = str(address_start + 2 * nibble)
+        addresses += ","
+        addresses += str(address_start + 1 + 2 * nibble)
+
+        return AnalyzerFrame("accessory_decoder_information_request", self.start_time, self.end_time,
+                             {"addresses": addresses})
+
+    def accessory_decoder_information_response(self):
+        group = self.packet_data[1]
+        address_start = group * 4
+        nibble = (self.packet_data[2] >> 4) & 0b1
+
+        first_state = self.packet_data[2] & 0b11
+        second_state = (self.packet_data[2] >> 2) & 0b11
+
+        addresses = str(address_start + 2 * nibble) + " (" + get_turnout_state(first_state) + ")"
+        addresses += ","
+        addresses += str(address_start + 1 + 2 * nibble) + " (" + get_turnout_state(second_state) + ")"
+
+        type_id = (self.packet_data[2] >> 5) & 0b11
+        type_name = "TBD"
+        # TODO handle state of feedback modules
+
+        if type_id == 0b00:
+            type_name = "w/o feedback"
+        elif type_id == 0b01:
+            type_name = "w/ feedback"
+        elif type_id == 0b10:
+            type_name = "feedback module"
+
+        extra = ""
+        if self.packet_data[2] >> 7:
+            extra = "(Request has been not completed)"
+
+        return AnalyzerFrame("accessory_decoder_information_response", self.start_time, self.end_time,
+                             {"type": type_name, "addresses": addresses, "extra": extra})
+
+    def accessory_decoder_operation_request(self):
+        # 'format': "Accessory Operation request. Address={{data.address}}, Output={{data.output}}/{{data.output_state}}"
+        address = (self.packet_data[1] * 4) + ((self.packet_data[2] >> 1) & 0b11)
+
+        output_state = "Deactivate"
+        # This is different from the documentation (sec. 2.2.18)
+        # because after testing and verifying with other documents it showed that these values must be swapped
+        if (self.packet_data[2] >> 3) & 0b1:
+            output_state = "Activate"
+
+        output = "1"
+        if self.packet_data[2] & 0b1:
+            output = "2"
+
+        return AnalyzerFrame("accessory_decoder_operation_request", self.start_time, self.end_time,
+                             {"address": address, "output": output, "output_state": output_state})

@@ -79,6 +79,9 @@ class Hla(HighLevelAnalyzer):
         'track_power_off': {
             'format': 'Track power off'
         },
+        'short_circuit': {
+            'format': 'ROCONET: Short circuit'
+        },
         'emergency_stop': {
             'format': 'Emergency Stop'
         },
@@ -240,6 +243,9 @@ class Hla(HighLevelAnalyzer):
             # Track power off packet
             elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x00:
                 return AnalyzerFrame("track_power_off", self.start_time, self.end_time)
+            # ROCONET extension short circuit
+            elif self.packet_data[0] == 0x61 and self.packet_data[1] == 0x08:
+                return AnalyzerFrame("short_circuit", self.start_time, self.end_time)
             # Emergency stop packet
             elif self.packet_data[0] == 0x81 and self.packet_data[1] == 0x00:
                 return AnalyzerFrame("emergency_stop", self.start_time, self.end_time)

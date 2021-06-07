@@ -54,7 +54,7 @@ _* = Multiple packages of the same type_
 |Direct Mode CV Write|Request||
 |Paged Mode write|Request||
 |Command station software version|Request||
-|Command station status|Reque<sst||
+|Command station status|Request||
 |Set command station power-up mode|?||
 |Accessory Decoder information|Request|X|
 |Accessory Decoder operation|Request|X|
@@ -72,6 +72,10 @@ _* = Multiple packages of the same type_
 |Address inquiry multi-unit|Request||
 |Address inquiry locomotive at command station|Request||
 |Delete locomotive from command station stack|Request||
+
+###Following ROCONET extensions have been implemented:
+ - Track power off: Short circuit
+
 
 ###TODOs:
  - Allow enabling/disabling normal inquiries

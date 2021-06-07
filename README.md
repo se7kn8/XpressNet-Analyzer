@@ -4,7 +4,7 @@ A high level logic analyzer for Saleae Logic 2.
 
 This extension provides support for XpressNet 3.0 a protocol by Lenz which is a protocol used in model railroads for communication.
 
-All packets are based on this documentation: [Link](https://wiki.rocrail.net/lib/exe/fetch.php?media=xpressnet:xpressnet-v2.pdf)
+All packets are based on this documentation: [XpressNet-V3.0](https://wiki.rocrail.net/lib/exe/fetch.php?media=xpressnet:xpressnet-v2.pdf) and [XpressNet-V3.6](https://wiki.rocrail.net/lib/exe/fetch.php?media=xpressnet:xpressnet-lan-usb-23151-v1.pdf)
 
 This analyzer is not complete, the table shows the current progress
 
@@ -54,14 +54,14 @@ _* = Multiple packages of the same type_
 |Direct Mode CV Write|Request||
 |Paged Mode write|Request||
 |Command station software version|Request||
-|Command station status|Request||
+|Command station status|Reque<sst||
 |Set command station power-up mode|?||
 |Accessory Decoder information|Request|X|
 |Accessory Decoder operation|Request|X|
 |Locomotive information|Request||
 |Function status|Request||
-|Locomotive speed and direction|Instructions||
-|Function operation|Instructions||
+|Locomotive speed and direction|Instructions|X|
+|Function operation|Instructions|X|
 |Set function state|?||
 |Double header *|Multiple||
 |Operations Mode programming byte mode write|Request||

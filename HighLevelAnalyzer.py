@@ -35,6 +35,10 @@ def get_packet_size(header):
     return (header & 0b1111) + 1
 
 
+def get_locomotive_address(high_byte, low_byte):
+    return (high_byte << 8) | low_byte
+
+
 def get_turnout_state(flags):
     if flags == 0b00:
         return "Not yet controlled"
@@ -44,6 +48,13 @@ def get_turnout_state(flags):
         return "Straight"
     elif flags == 0b11:
         return "Invalid"
+
+
+def on_off(bit):
+    if bit:
+        return "ON"
+    else:
+        return "OFF"
 
 
 # High level analyzers must subclass the HighLevelAnalyzer class.
@@ -88,6 +99,12 @@ class Hla(HighLevelAnalyzer):
         'accessory_decoder_operation_request': {
             'format': "Accessory Operation request. Address={{data.address}}, Output={{data.output}}/{{data.output_state}}"
         },
+        'locomotive_speed_and_direction_operation': {
+            'format': "Locomotive speed and direction operation. Address={{data.address}}, Steps={{data.steps}}, Speed={{data.speed}}, Direction={{data.direction}}"
+        },
+        'function_operation_instructions': {
+            'format': "Locomotive function operation instructions. Address={{data.address}} Functions={{data.functions}}"
+        },
 
         # Station to device packets
         'accessory_decoder_information_response': {
@@ -113,6 +130,7 @@ class Hla(HighLevelAnalyzer):
             0x21: self.operation_request,
             0x42: self.accessory_decoder_information_request,
             0x52: self.accessory_decoder_operation_request,
+            0xE4: self.locomotive_instructions,
         }
         self.station_header_map = {
             0x42: self.accessory_decoder_information_response,
@@ -282,7 +300,6 @@ class Hla(HighLevelAnalyzer):
                              {"type": type_name, "addresses": addresses, "extra": extra})
 
     def accessory_decoder_operation_request(self):
-        # 'format': "Accessory Operation request. Address={{data.address}}, Output={{data.output}}/{{data.output_state}}"
         address = (self.packet_data[1] * 4) + ((self.packet_data[2] >> 1) & 0b11)
 
         output_state = "Deactivate"
@@ -297,3 +314,82 @@ class Hla(HighLevelAnalyzer):
 
         return AnalyzerFrame("accessory_decoder_operation_request", self.start_time, self.end_time,
                              {"address": address, "output": output, "output_state": output_state})
+
+    def locomotive_instructions(self):
+        if self.packet_data[1] == 0x10 or self.packet_data[1] == 0x11 or self.packet_data[1] == 0x12 or self.packet_data[1] == 0x13:
+            return self.locomotive_speed_and_direction_operation()
+        elif self.packet_data[1] == 0x20 or self.packet_data[1] == 0x21 or self.packet_data[1] == 0x22 or self.packet_data[1] == 0x23 or \
+                self.packet_data[1] == 0x24:
+            return self.locomotive_function_instructions_operation()
+
+    def locomotive_speed_and_direction_operation(self):
+        address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+        steps = 0
+
+        if self.packet_data[1] == 0x10:
+            steps = 14
+        elif self.packet_data[1] == 0x11:
+            steps = 27
+        elif self.packet_data[1] == 0x12:
+            steps = 28
+        elif self.packet_data[1] == 0x13:
+            steps = 128
+
+        direction = "Reverse"
+        if (self.packet_data[4] >> 7) & 0b1:
+            direction = "Forward"
+
+        speed = self.packet_data[4] & 0b1111111
+
+        if speed == 1:
+            speed = "Emergency stop"
+        elif speed >= 1:
+            speed = speed - 1
+
+        # TODO check if speed calculation is correct with other speed steps
+
+        return AnalyzerFrame("locomotive_speed_and_direction_operation", self.start_time, self.end_time,
+                             {"address": address, "steps": steps, "direction": direction, "speed": speed})
+
+    def locomotive_function_instructions_operation(self):
+        address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+
+        functions = ""
+
+        if self.packet_data[1] == 0x20:
+            functions += "F0:" + on_off(self.packet_data[4] >> 4) + ", "
+            functions += "F1:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F2:" + on_off((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F3:" + on_off((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F4:" + on_off((self.packet_data[4] >> 3) & 0b1)
+        elif self.packet_data[1] == 0x21:
+            functions += "F5:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F6:" + on_off((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F7." + on_off((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F8:" + on_off((self.packet_data[4] >> 3) & 0b1)
+        elif self.packet_data[1] == 0x22:
+            functions += "F9:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F10:" + on_off((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F11:" + on_off((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F12:" + on_off((self.packet_data[4] >> 3) & 0b1)
+        elif self.packet_data[1] == 0x23:
+            functions += "F13:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F14:" + on_off((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F15:" + on_off((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F16:" + on_off((self.packet_data[4] >> 3) & 0b1) + ", "
+            functions += "F17:" + on_off((self.packet_data[4] >> 4) & 0b1) + ", "
+            functions += "F18:" + on_off((self.packet_data[4] >> 5) & 0b1) + ", "
+            functions += "F19:" + on_off((self.packet_data[4] >> 6) & 0b1) + ", "
+            functions += "F20:" + on_off((self.packet_data[4] >> 7) & 0b1)
+        elif self.packet_data[1] == 0x24:
+            functions += "F21:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F22:" + on_off((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F23:" + on_off((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F24:" + on_off((self.packet_data[4] >> 3) & 0b1) + ", "
+            functions += "F25:" + on_off((self.packet_data[4] >> 4) & 0b1) + ", "
+            functions += "F26:" + on_off((self.packet_data[4] >> 5) & 0b1) + ", "
+            functions += "F27:" + on_off((self.packet_data[4] >> 6) & 0b1) + ", "
+            functions += "F28:" + on_off((self.packet_data[4] >> 7) & 0b1)
+
+        return AnalyzerFrame("function_operation_instructions", self.start_time, self.end_time,
+                             {"address": address, "functions": functions})

@@ -23,8 +23,8 @@ _* = Multiple packages of the same type_
 |Feedback Broadcast|Broadcast||
 |Programming info *|Response||
 |Service Mode Response *|Response||
-|Software Version|Response||
-|Command station status indication|Response||
+|Software Version|Response|X|
+|Command station status indication|Response|X|
 |Transfer Errors|Response||
 |Command station busy response|Response||
 |Instruction not supported|Response||

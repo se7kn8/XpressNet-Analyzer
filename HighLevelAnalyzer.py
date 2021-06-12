@@ -108,6 +108,12 @@ class Hla(HighLevelAnalyzer):
         'generic_request': {
             'format': "Request: {{data.type}}"
         },
+        'software_version': {
+            'format': "Software-Version: {{data.type}} ID: {{data.extra}}"
+        },
+        'status': {
+            'format': "Status: {{data.extra}}"
+        },
 
         # Station to device packets
         'accessory_decoder_information_response': {
@@ -139,6 +145,8 @@ class Hla(HighLevelAnalyzer):
         }
         self.station_header_map = {
             0x42: self.accessory_decoder_information_response,
+            0x62: self.station_status,
+            0x63: self.station_software_version,
         }
         pass
 
@@ -409,3 +417,31 @@ class Hla(HighLevelAnalyzer):
             return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Command station software-version"})
         elif self.packet_data[1] == 0x24:
             return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Command station status"})
+
+    def station_software_version(self):
+        if self.packet_data[1] == 0x21:
+            major = self.packet_data[2] >> 4
+            minor = self.packet_data[2] & 0b1111
+            return AnalyzerFrame("software_version", self.start_time, self.end_time,
+                                 {"type": str(major) + "." + str(minor), "extra": str(self.packet_data[3])})
+
+    def station_status(self):
+        if self.packet_data[1] == 0x22:
+            base = "Info: "
+            if check_bit(self.packet_data[2], 8):
+                base += "RAM Check error;"
+            if check_bit(self.packet_data[2], 7):
+                base += "Power up;"
+            if check_bit(self.packet_data[2], 4):
+                base += "Service Mode;"
+            if check_bit(self.packet_data[2], 3):
+                base += "Automatic Mode;"
+            else:
+                base += "Manual Mode;"
+            if check_bit(self.packet_data[2], 2):
+                base += "Emergency Stop;"
+            if check_bit(self.packet_data[2], 1):
+                base += "Emergency Off;"
+
+            return AnalyzerFrame("status", self.start_time, self.end_time,
+                                 {"extra": base})

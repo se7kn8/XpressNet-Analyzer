@@ -1,5 +1,5 @@
 # High Level Analyzer
-from saleae.analyzers import HighLevelAnalyzer, AnalyzerFrame
+from saleae.analyzers import HighLevelAnalyzer, AnalyzerFrame, ChoicesSetting, NumberSetting
 
 
 def check_bit(value, pos):
@@ -93,9 +93,6 @@ class Hla(HighLevelAnalyzer):
         'acknowledgment_response': {
             'format': "Acknowledgment Response"
         },
-        'operation_request': {
-            'format': "Operation request: {{data.type}}"
-        },
         'accessory_decoder_information_request': {
             'format': "Accessory Decoder request. Addresses={{data.addresses}}"
         },
@@ -108,12 +105,17 @@ class Hla(HighLevelAnalyzer):
         'function_operation_instructions': {
             'format': "Locomotive function operation instructions. Address={{data.address}} Functions={{data.functions}}"
         },
+        'generic_request': {
+            'format': "Request: {{data.type}}"
+        },
 
         # Station to device packets
         'accessory_decoder_information_response': {
             'format': "Accessory Decoder response. Type={{data.type}} Addresses={{data.addresses}} {{data.extra}}"
         },
     }
+
+    show_inquiry_packets = ChoicesSetting(choices=("Yes", "No"))
 
     address = 0
     in_packet = False
@@ -130,7 +132,7 @@ class Hla(HighLevelAnalyzer):
     def __init__(self):
         self.client_header_map = {
             0x20: self.acknowledgment_response,
-            0x21: self.operation_request,
+            0x21: self.generic_request,
             0x42: self.accessory_decoder_information_request,
             0x52: self.accessory_decoder_operation_request,
             0xE4: self.locomotive_instructions,
@@ -157,6 +159,8 @@ class Hla(HighLevelAnalyzer):
             # Handle special cases
             special_case = self.handle_special_case(data, frame)
             if special_case:
+                if special_case.type == "normal_inquiry" and self.show_inquiry_packets == "No":
+                    return
                 return special_case
 
             # Handle broadcast or answer
@@ -255,13 +259,6 @@ class Hla(HighLevelAnalyzer):
 
     def acknowledgment_response(self):
         return AnalyzerFrame("acknowledgment_response", self.start_time, self.end_time)
-
-    def operation_request(self):
-        # Resume operation request
-        if self.packet_data[1] == 0x81:
-            return AnalyzerFrame("operation_request", self.start_time, self.end_time, {"type": "Resume"})
-        elif self.packet_data[1] == 0x80:
-            return AnalyzerFrame("operation_request", self.start_time, self.end_time, {"type": "Emergency Stop"})
 
     def accessory_decoder_information_request(self):
         group = self.packet_data[1]
@@ -399,3 +396,16 @@ class Hla(HighLevelAnalyzer):
 
         return AnalyzerFrame("function_operation_instructions", self.start_time, self.end_time,
                              {"address": address, "functions": functions})
+
+    def generic_request(self):
+        # Resume operation request
+        if self.packet_data[1] == 0x81:
+            return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Resume Operations"})
+        elif self.packet_data[1] == 0x80:
+            return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Stop Operations (Emergency off)"})
+        elif self.packet_data[1] == 0x10:
+            return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Service Mode Results"})
+        elif self.packet_data[1] == 0x21 and self.packet_data[2] == 0x21:
+            return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Command station software-version"})
+        elif self.packet_data[1] == 0x12 and self.packet_data[2] == 0x24:
+            return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Command station status"})

@@ -49,12 +49,12 @@ _* = Multiple packages of the same type_
 |Register Mode read|Request||
 |Direct Mode CV read|Request||
 |Paged Mode read|Request||
-|Service Mode results|Request||
+|Service Mode results|Request|X|
 |Register Mode Write|Request||
 |Direct Mode CV Write|Request||
 |Paged Mode write|Request||
-|Command station software version|Request||
-|Command station status|Request||
+|Command station software version|Request|X|
+|Command station status|Request|X|
 |Set command station power-up mode|?||
 |Accessory Decoder information|Request|X|
 |Accessory Decoder operation|Request|X|
@@ -78,7 +78,6 @@ _* = Multiple packages of the same type_
 
 
 ###TODOs:
- - Allow enabling/disabling normal inquiries
  - Allow setting the accessory decoder address format (turnout, switching decoder, feedback module)
  - Handle other accessory decoders than switching decoders
 

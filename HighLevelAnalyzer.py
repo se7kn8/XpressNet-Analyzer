@@ -405,7 +405,7 @@ class Hla(HighLevelAnalyzer):
             return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Stop Operations (Emergency off)"})
         elif self.packet_data[1] == 0x10:
             return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Service Mode Results"})
-        elif self.packet_data[1] == 0x21 and self.packet_data[2] == 0x21:
+        elif self.packet_data[1] == 0x21:
             return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Command station software-version"})
-        elif self.packet_data[1] == 0x12 and self.packet_data[2] == 0x24:
+        elif self.packet_data[1] == 0x24:
             return AnalyzerFrame("generic_request", self.start_time, self.end_time, {"type": "Command station status"})

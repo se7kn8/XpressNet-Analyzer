@@ -3,7 +3,7 @@
   "apiVersion": "1.0.0",
   "author": "Sebastian Knackstedt",
   "version": "0.0.1",
-  "description": "This extension provides support for XpressNet, a communication protocol in model railroads. WIP.",
+  "description": "This extension provides support for XpressNet, a communication protocol in model railroads. Works only with an Async-Serial analyzer as base. WIP.",
   "extensions": {
     "XpressNet": {
       "type": "HighLevelAnalyzer",

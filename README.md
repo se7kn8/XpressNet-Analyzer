@@ -4,7 +4,10 @@
 
 A high level logic analyzer for Saleae Logic 2.
 
+![Picture of the analyzer](https://raw.githubusercontent.com/SE7-KN8/XpressNet-Analyzer/master/.github/img.png)
+
 This extension provides support for XpressNet 3.0 a protocol by Lenz which is a protocol used in model railroads for communication.
+To use this analyzer you first need an Async-Serial low lever decoder.
 
 All packets are based on this documentation: [XpressNet-V3.0](https://wiki.rocrail.net/lib/exe/fetch.php?media=xpressnet:xpressnet-v2.pdf) and [XpressNet-V3.6](https://wiki.rocrail.net/lib/exe/fetch.php?media=xpressnet:xpressnet-lan-usb-23151-v1.pdf)
 

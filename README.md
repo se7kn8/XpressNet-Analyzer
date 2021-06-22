@@ -75,11 +75,11 @@ _* = Multiple packages of the same type_
 |Address inquiry locomotive at command station|Request||
 |Delete locomotive from command station stack|Request||
 
-###Following ROCONET extensions have been implemented:
+### Following ROCONET extensions have been implemented:
  - Track power off: Short circuit
 
 
-###TODOs:
+### TODOs:
  - Allow setting the accessory decoder address format (turnout, switching decoder, feedback module)
  - Handle other accessory decoders than switching decoders
 

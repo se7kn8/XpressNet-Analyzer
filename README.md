@@ -34,9 +34,9 @@ _* = Multiple packages of the same type_
 |Command station busy response|Response||
 |Instruction not supported|Response||
 |Accessory Decoder information|Response|X|
-|Locomotive information *|Response||
-|Locomotive is being operated|Response||
-|Function status|Response||
+|Locomotive information *|Response|X|
+|Locomotive is being operated|Response|X|
+|Function status|Response|X|
 |Locomotive information (address retrieval)|Response||
 |Double Header *|Multiple||
 |MU+DH error||Response||
@@ -63,8 +63,8 @@ _* = Multiple packages of the same type_
 |Set command station power-up mode|?||
 |Accessory Decoder information|Request|X|
 |Accessory Decoder operation|Request|X|
-|Locomotive information|Request||
-|Function status|Request||
+|Locomotive information|Request|X|
+|Function status|Request|X|
 |Locomotive speed and direction|Instructions|X|
 |Function operation|Instructions|X|
 |Set function state|?||

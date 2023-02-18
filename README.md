@@ -41,9 +41,9 @@ _* = Multiple packages of the same type_
 |Service Mode Response *|Response||
 |Software Version|Response|X|
 |Command station status indication|Response|X|
-|Transfer Errors|Response||
-|Command station busy response|Response||
-|Instruction not supported|Response||
+|Transfer Errors|Response|X|
+|Command station busy response|Response|X|
+|Instruction not supported|Response|X|
 |Accessory Decoder information|Response|X|
 |Locomotive information *|Response|X|
 |Locomotive is being operated|Response|X|

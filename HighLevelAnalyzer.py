@@ -36,7 +36,7 @@ def get_packet_size(header):
 
 
 def get_locomotive_address(high_byte, low_byte):
-    return (high_byte << 8) | low_byte
+    return ((high_byte & 0b00111111) << 8) | low_byte
 
 
 def get_turnout_state(flags):
@@ -56,6 +56,11 @@ def on_off(bit):
     else:
         return "OFF"
 
+def f_status(bit):
+    if bit:
+        return "M"
+    else:
+        return "T"
 
 # High level analyzers must subclass the HighLevelAnalyzer class.
 class Hla(HighLevelAnalyzer):
@@ -141,10 +146,13 @@ class Hla(HighLevelAnalyzer):
             0x21: self.generic_request,
             0x42: self.accessory_decoder_information_request,
             0x52: self.accessory_decoder_operation_request,
+            0xE3: self.locomotive_function_instructions,
             0xE4: self.locomotive_instructions,
         }
         self.station_header_map = {
             0x42: self.accessory_decoder_information_response,
+            0xE3: self.loco_information,
+            0xE4: self.loco_fstatus_information,
             0x62: self.station_status,
             0x63: self.station_software_version,
         }
@@ -424,6 +432,141 @@ class Hla(HighLevelAnalyzer):
             minor = self.packet_data[2] & 0b1111
             return AnalyzerFrame("software_version", self.start_time, self.end_time,
                                  {"type": str(major) + "." + str(minor), "extra": str(self.packet_data[3])})
+
+    def loco_information(self):
+        if self.packet_data[1] == 0x40:
+            return AnalyzerFrame("Loco operated by another device", self.start_time, self.end_time)
+        elif self.packet_data[1] == 0x50:
+
+            functions = ""
+            functions += "F0:" +  f_status(self.packet_data[2] >> 4) + ", "
+            functions += "F1:" +  f_status((self.packet_data[2] >> 0) & 0b1) + ", "
+            functions += "F2:" +  f_status((self.packet_data[2] >> 1) & 0b1) + ", "
+            functions += "F3:" +  f_status((self.packet_data[2] >> 2) & 0b1) + ", "
+            functions += "F4:" +  f_status((self.packet_data[2] >> 3) & 0b1) + ", "
+
+            functions += "F5:" +  f_status((self.packet_data[3] >> 0) & 0b1) + ", "
+            functions += "F6:" +  f_status((self.packet_data[3] >> 1) & 0b1) + ", "
+            functions += "F7:" +  f_status((self.packet_data[3] >> 2) & 0b1) + ", "
+            functions += "F8:" +  f_status((self.packet_data[3] >> 3) & 0b1) + ", "
+            functions += "F9:" +  f_status((self.packet_data[3] >> 4) & 0b1) + ", "
+            functions += "F10:" + f_status((self.packet_data[3] >> 5) & 0b1) + ", "
+            functions += "F11:" + f_status((self.packet_data[3] >> 6) & 0b1) + ", "
+            functions += "F12:" + f_status((self.packet_data[3] >> 7) & 0b1)
+
+            return AnalyzerFrame("Function F0-F12 Status Response", self.start_time, self.end_time,
+                                 {"Functions": functions})
+        elif self.packet_data[1] == 0x52:
+
+            functions = ""
+            functions += "F13:" + on_off((self.packet_data[2] >> 0) & 0b1) + ", "
+            functions += "F14:" + on_off((self.packet_data[2] >> 1) & 0b1) + ", "
+            functions += "F15:" + on_off((self.packet_data[2] >> 2) & 0b1) + ", "
+            functions += "F16:" + on_off((self.packet_data[2] >> 3) & 0b1) + ", "
+            functions += "F17:" + on_off((self.packet_data[2] >> 4) & 0b1) + ", "
+            functions += "F18:" + on_off((self.packet_data[2] >> 5) & 0b1) + ", "
+            functions += "F19:" + on_off((self.packet_data[2] >> 6) & 0b1) + ", "
+            functions += "F20:" + on_off((self.packet_data[2] >> 7) & 0b1) + ", "
+
+            functions += "F21:" + on_off((self.packet_data[3] >> 0) & 0b1) + ", "
+            functions += "F22:" + on_off((self.packet_data[3] >> 1) & 0b1) + ", "
+            functions += "F23:" + on_off((self.packet_data[3] >> 2) & 0b1) + ", "
+            functions += "F24:" + on_off((self.packet_data[3] >> 3) & 0b1) + ", "
+            functions += "F25:" + on_off((self.packet_data[3] >> 4) & 0b1) + ", "
+            functions += "F26:" + on_off((self.packet_data[3] >> 5) & 0b1) + ", "
+            functions += "F27:" + on_off((self.packet_data[3] >> 6) & 0b1) + ", "
+            functions += "F28:" + on_off((self.packet_data[3] >> 7) & 0b1)
+
+            return AnalyzerFrame("Function F13-F28 Info Response", self.start_time, self.end_time,
+                                 {"Functions": functions})
+
+    def loco_fstatus_information(self):
+        if self.packet_data[1] == 0x51:
+
+            functions = ""
+            functions += "F13:" +  f_status((self.packet_data[2] >> 0) & 0b1) + ", "
+            functions += "F14:" +  f_status((self.packet_data[2] >> 1) & 0b1) + ", "
+            functions += "F15:" +  f_status((self.packet_data[2] >> 2) & 0b1) + ", "
+            functions += "F16:" +  f_status((self.packet_data[2] >> 3) & 0b1) + ", "
+            functions += "F17:" +  f_status((self.packet_data[2] >> 4) & 0b1) + ", "
+            functions += "F18:" +  f_status((self.packet_data[2] >> 5) & 0b1) + ", "
+            functions += "F19:" +  f_status((self.packet_data[2] >> 6) & 0b1) + ", "
+            functions += "F20:" +  f_status((self.packet_data[2] >> 7) & 0b1) + ", "
+
+            functions += "F21:" +  f_status((self.packet_data[3] >> 0) & 0b1) + ", "
+            functions += "F22:" +  f_status((self.packet_data[3] >> 1) & 0b1) + ", "
+            functions += "F23:" +  f_status((self.packet_data[3] >> 2) & 0b1) + ", "
+            functions += "F24:" +  f_status((self.packet_data[3] >> 3) & 0b1) + ", "
+            functions += "F25:" +  f_status((self.packet_data[3] >> 4) & 0b1) + ", "
+            functions += "F26:" + f_status((self.packet_data[3] >> 5) & 0b1) + ", "
+            functions += "F27:" + f_status((self.packet_data[3] >> 6) & 0b1) + ", "
+            functions += "F28:" + f_status((self.packet_data[3] >> 7) & 0b1)
+
+            return AnalyzerFrame("Function F13-F28 Status Response", self.start_time, self.end_time,
+                                 {"Functions": functions})
+        else:
+            steps = 0
+
+            if self.packet_data[1] & 0b111 == 0x00:
+                steps = 14
+            elif self.packet_data[1] & 0b111 == 0x01:
+                steps = 27
+            elif self.packet_data[1] & 0b111 == 0x02:
+                steps = 28
+            elif self.packet_data[1] & 0b111 == 0x04:
+                steps = 128
+
+            direction = "Reverse"
+            if (self.packet_data[2] >> 7) & 0b1:
+                direction = "Forward"
+
+            speed = self.packet_data[2] & 0b1111111
+
+            if speed == 1:
+                speed = "Emergency stop"
+            elif speed >= 1:
+                speed = speed - 1
+
+            # TODO check if speed calculation is correct with other speed steps
+
+            functions = ""
+            functions += "F0:" + on_off(self.packet_data[3] >> 4) + ", "
+            functions += "F1:" + on_off((self.packet_data[3] >> 0) & 0b1) + ", "
+            functions += "F2:" + on_off((self.packet_data[3] >> 1) & 0b1) + ", "
+            functions += "F3:" + on_off((self.packet_data[3] >> 2) & 0b1) + ", "
+            functions += "F4:" + on_off((self.packet_data[3] >> 3) & 0b1) + ", "
+
+            functions += "F5:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F6:" + on_off((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F7:" + on_off((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F8:" + on_off((self.packet_data[4] >> 3) & 0b1) + ", "
+            functions += "F9:" + on_off((self.packet_data[4] >> 4) & 0b1) + ", "
+            functions += "F10:" + on_off((self.packet_data[4] >> 5) & 0b1) + ", "
+            functions += "F11:" + on_off((self.packet_data[4] >> 6) & 0b1) + ", "
+            functions += "F12:" + on_off((self.packet_data[4] >> 7) & 0b1)
+
+            return AnalyzerFrame("locomotive Information Response", self.start_time, self.end_time,
+                                {"steps": steps, "direction": direction, "speed": speed, "functions": functions})
+
+    def locomotive_function_instructions(self):
+        if self.packet_data[1] == 0x00:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+            return AnalyzerFrame("Request Locomotive Information", self.start_time, self.end_time,
+                                 {"Adress": address})
+        elif self.packet_data[1] == 0x07:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+            return AnalyzerFrame("Request Function F0-F12 Status", self.start_time, self.end_time,
+                                 {"Adress": address})
+        elif self.packet_data[1] == 0x08:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+            return AnalyzerFrame("Request Function F13-F28 Status", self.start_time, self.end_time,
+                                 {"Adress": address})
+        elif self.packet_data[1] == 0x09:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+            return AnalyzerFrame("Request Function F13-F28 Information", self.start_time, self.end_time,
+                                 {"Adress": address})
+
+
 
     def station_status(self):
         if self.packet_data[1] == 0x22:

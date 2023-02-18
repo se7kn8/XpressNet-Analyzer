@@ -119,6 +119,15 @@ class Hla(HighLevelAnalyzer):
         'status': {
             'format': "Status: {{data.extra}}"
         },
+        'transfer_error': {
+            'format': "Transfer error"
+        },
+        'command_station_busy': {
+            'format': "Command Station busy"
+        },
+        'instruction_not_supported': {
+            'format': "Instruction not supported by Command Station"
+        },
 
         # Station to device packets
         'accessory_decoder_information_response': {
@@ -153,6 +162,7 @@ class Hla(HighLevelAnalyzer):
             0x42: self.accessory_decoder_information_response,
             0xE3: self.loco_information,
             0xE4: self.loco_fstatus_information,
+            0x61: self.command_station_errors,
             0x62: self.station_status,
             0x63: self.station_software_version,
         }
@@ -632,7 +642,13 @@ class Hla(HighLevelAnalyzer):
             return AnalyzerFrame("Request Function F13-F28 Information", self.start_time, self.end_time,
                                  {"Adress": address})
 
-
+    def command_station_errors(self):
+        if self.packet_data[1] == 0x80:
+            return AnalyzerFrame("transfer_error", self.start_time, self.end_time)
+        if self.packet_data[1] == 0x81:
+            return AnalyzerFrame("command_station_busy", self.start_time, self.end_time)
+        if self.packet_data[1] == 0x82:
+            return AnalyzerFrame("instruction_not_supported", self.start_time, self.end_time)
 
     def station_status(self):
         if self.packet_data[1] == 0x22:

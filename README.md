@@ -76,7 +76,7 @@ _* = Multiple packages of the same type_
 |Function status|Request|X|
 |Locomotive speed and direction|Instructions|X|
 |Function operation|Instructions|X|
-|Set function state|?||
+|Set function state|Instructions|X|
 |Double header *|Multiple||
 |Operations Mode programming byte mode write|Request||
 |Operations Mode programming bit mode write|Request||

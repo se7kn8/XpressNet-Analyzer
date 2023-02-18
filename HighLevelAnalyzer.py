@@ -337,9 +337,73 @@ class Hla(HighLevelAnalyzer):
     def locomotive_instructions(self):
         if self.packet_data[1] == 0x10 or self.packet_data[1] == 0x11 or self.packet_data[1] == 0x12 or self.packet_data[1] == 0x13:
             return self.locomotive_speed_and_direction_operation()
-        elif self.packet_data[1] == 0x20 or self.packet_data[1] == 0x21 or self.packet_data[1] == 0x22 or self.packet_data[1] == 0x23 or \
-                self.packet_data[1] == 0x24:
+        elif self.packet_data[1] == 0x20 or self.packet_data[1] == 0x21 or self.packet_data[1] == 0x22 or self.packet_data[1] == 0x23:
             return self.locomotive_function_instructions_operation()
+        elif self.packet_data[1] == 0x24:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+
+            functions = ""
+            functions += "F0:" + f_status(self.packet_data[4] >> 4) + ", "
+            functions += "F1:" + f_status((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F2:" + f_status((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F3:" + f_status((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F4:" + f_status((self.packet_data[4] >> 3) & 0b1)
+
+            return AnalyzerFrame("Set Function F0-F4 Status", self.start_time, self.end_time,
+                             {"address": address, "functions": functions})
+        elif self.packet_data[1] == 0x25:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+
+            functions = ""
+            functions += "F5:" + f_status(self.packet_data[4] >> 0) + ", "
+            functions += "F6:" + f_status((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F7:" + f_status((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F8:" + f_status((self.packet_data[4] >> 3) & 0b1)
+            
+            return AnalyzerFrame("Set Function F5-F8 Status", self.start_time, self.end_time,
+                             {"address": address, "functions": functions})
+        elif self.packet_data[1] == 0x26:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+
+            functions = ""
+            functions += "F9:" + f_status(self.packet_data[4] >> 0) + ", "
+            functions += "F10:" + f_status((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F11:" + f_status((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F12:" + f_status((self.packet_data[4] >> 3) & 0b1)
+            
+            return AnalyzerFrame("Set Function F9-F12 Status", self.start_time, self.end_time,
+                             {"address": address, "functions": functions})
+        elif self.packet_data[1] == 0x27:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+
+            functions = ""
+            functions += "F13:" + f_status(self.packet_data[4] >> 0) + ", "
+            functions += "F14:" + f_status((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F15:" + f_status((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F16:" + f_status((self.packet_data[4] >> 3) & 0b1) + ", "
+            functions += "F17:" + f_status((self.packet_data[4] >> 4) & 0b1) + ", "
+            functions += "F18:" + f_status((self.packet_data[4] >> 5) & 0b1) + ", "
+            functions += "F19:" + f_status((self.packet_data[4] >> 6) & 0b1) + ", "
+            functions += "F20:" + f_status((self.packet_data[4] >> 7) & 0b1)
+            
+            return AnalyzerFrame("Set Function F13-F20 Status", self.start_time, self.end_time,
+                             {"address": address, "functions": functions})
+        elif self.packet_data[1] == 0x2C:
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+
+            functions = ""
+            functions += "F21:" + f_status(self.packet_data[4] >> 0) + ", "
+            functions += "F22:" + f_status((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F23:" + f_status((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F24:" + f_status((self.packet_data[4] >> 3) & 0b1) + ", "
+            functions += "F25:" + f_status((self.packet_data[4] >> 4) & 0b1) + ", "
+            functions += "F26:" + f_status((self.packet_data[4] >> 5) & 0b1) + ", "
+            functions += "F27:" + f_status((self.packet_data[4] >> 6) & 0b1) + ", "
+            functions += "F28:" + f_status((self.packet_data[4] >> 7) & 0b1)
+            
+            return AnalyzerFrame("Set Function F21-F28 Status", self.start_time, self.end_time,
+                             {"address": address, "functions": functions})
+
 
     def locomotive_speed_and_direction_operation(self):
         address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
@@ -374,6 +438,7 @@ class Hla(HighLevelAnalyzer):
         address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
 
         functions = ""
+
         if self.packet_data[1] == 0x20:
             functions += "F0:" + on_off(self.packet_data[4] >> 4) + ", "
             functions += "F1:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
@@ -400,14 +465,14 @@ class Hla(HighLevelAnalyzer):
             functions += "F19:" + on_off((self.packet_data[4] >> 6) & 0b1) + ", "
             functions += "F20:" + on_off((self.packet_data[4] >> 7) & 0b1)
         elif self.packet_data[1] == 0x24:
-            functions += "F21:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "
-            functions += "F22:" + on_off((self.packet_data[4] >> 1) & 0b1) + ", "
-            functions += "F23:" + on_off((self.packet_data[4] >> 2) & 0b1) + ", "
-            functions += "F24:" + on_off((self.packet_data[4] >> 3) & 0b1) + ", "
-            functions += "F25:" + on_off((self.packet_data[4] >> 4) & 0b1) + ", "
-            functions += "F26:" + on_off((self.packet_data[4] >> 5) & 0b1) + ", "
-            functions += "F27:" + on_off((self.packet_data[4] >> 6) & 0b1) + ", "
-            functions += "F28:" + on_off((self.packet_data[4] >> 7) & 0b1)
+            functions += "F21:" + f_status((self.packet_data[4] >> 0) & 0b1) + ", "
+            functions += "F22:" + f_status((self.packet_data[4] >> 1) & 0b1) + ", "
+            functions += "F23:" + f_status((self.packet_data[4] >> 2) & 0b1) + ", "
+            functions += "F24:" + f_status((self.packet_data[4] >> 3) & 0b1) + ", "
+            functions += "F25:" + f_status((self.packet_data[4] >> 4) & 0b1) + ", "
+            functions += "F26:" + f_status((self.packet_data[4] >> 5) & 0b1) + ", "
+            functions += "F27:" + f_status((self.packet_data[4] >> 6) & 0b1) + ", "
+            functions += "F28:" + f_status((self.packet_data[4] >> 7) & 0b1)
 
         return AnalyzerFrame("function_operation_instructions", self.start_time, self.end_time,
                              {"address": address, "functions": functions})
@@ -434,7 +499,9 @@ class Hla(HighLevelAnalyzer):
 
     def loco_information(self):
         if self.packet_data[1] == 0x40:
-            return AnalyzerFrame("Loco operated by another device", self.start_time, self.end_time)
+            address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
+
+            return AnalyzerFrame("Loco operated by another device", self.start_time, self.end_time, {"Address": address})
         elif self.packet_data[1] == 0x50:
 
             functions = ""

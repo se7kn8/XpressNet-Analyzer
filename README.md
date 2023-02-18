@@ -37,7 +37,7 @@ _* = Multiple packages of the same type_
 |Locomotive information *|Response|X|
 |Locomotive is being operated|Response|X|
 |Function status|Response|X|
-|Locomotive information (address retrieval)|Response||
+|Locomotive information (address retrieval)|Response|X|
 |Double Header *|Multiple||
 |MU+DH error||Response||
 

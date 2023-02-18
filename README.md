@@ -22,6 +22,7 @@ The new status requests and responses report the status as follows:
 |M|Momentary function|When on a device the function button is pressed the function is ON, when the button is released the function is OFF again|
 |T|Toggle function|When on a device the function button is pressed this function is ON, when the button is pressed again the function is OFF|
 
+
 ![Picture of the analyzer](https://raw.githubusercontent.com/UtFryslan/XpressNet-Analyzer/master/.github/setfunctionstatus.png)
 
 ### From command station to device:

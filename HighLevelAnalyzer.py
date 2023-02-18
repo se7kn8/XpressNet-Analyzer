@@ -374,7 +374,6 @@ class Hla(HighLevelAnalyzer):
         address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
 
         functions = ""
-
         if self.packet_data[1] == 0x20:
             functions += "F0:" + on_off(self.packet_data[4] >> 4) + ", "
             functions += "F1:" + on_off((self.packet_data[4] >> 0) & 0b1) + ", "

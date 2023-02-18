@@ -16,7 +16,9 @@ This analyzer is not complete, the table shows the current progress
 ### Corrected functions
 The function status functions are corrected. They now show if a function is a momentary or toggle function
 The new status requests and responses report the status as follows:
+
 |Char|Function|Description|
+|----|--------|-----------|
 |M|Momentary function|When on a device the function button is pressed the function is ON, when the button is released the function is OFF again|
 |T|Toggle function|When on a device the function button is pressed this function is ON, when the button is pressed again the function is OFF|
 

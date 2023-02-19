@@ -36,6 +36,8 @@ def get_packet_size(header):
 
 
 def get_locomotive_address(high_byte, low_byte):
+    if high_byte == 0x00:
+        return low_byte
     return ((high_byte & 0b00111111) << 8) | low_byte
 
 
@@ -579,7 +581,7 @@ class Hla(HighLevelAnalyzer):
             functions += "F28:" + f_status((self.packet_data[3] >> 7) & 0b1)
 
             return AnalyzerFrame("Function F13-F28 Status Response", self.start_time, self.end_time,
-                                 {"Functions": functions})
+                                 {"Functions": functions, "Refresh-Modus": str(self.packet_data[4])})
         else:
             steps = 0
 

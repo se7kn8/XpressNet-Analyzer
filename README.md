@@ -18,12 +18,16 @@ The function status functions are corrected. They now show if a function is a mo
 The new status requests and responses report the status as follows:
 
 |Char|Function|Description|
-|----|--------|-----------|
+|----|--------|:---------:|
 |M|Momentary function|When on a device the function button is pressed the function is ON, when the button is released the function is OFF again|
 |T|Toggle function|When on a device the function button is pressed this function is ON, when the button is pressed again the function is OFF|
 
 
 ![Picture of the analyzer](https://raw.githubusercontent.com/UtFryslan/XpressNet-Analyzer/master/.github/setfunctionstatus.png)
+
+### Changed address representation
+The address representation has changed. If the high byte of the address is 0x00, than the address is between 0 and 99. Only the low byte is used for the address.
+If the high byte not is 0x00, than the address is between 100 and 9999. The address is shown as a readable address by filtering out the MSB 15 and 14.
 
 ### From command station to device:
 _* = Multiple packages of the same type_

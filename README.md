@@ -65,7 +65,7 @@ _* = Multiple packages of the same type_
 |Resume operations|Request|X|
 |Stop operations|Request|X|
 |Stop all locomotives|Request||
-|Emergency stop a locomotive|?||
+|Emergency stop a locomotive|Request|X|
 |Register Mode read|Request||
 |Direct Mode CV read|Request||
 |Paged Mode read|Request||

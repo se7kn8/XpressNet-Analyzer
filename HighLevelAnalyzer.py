@@ -157,6 +157,7 @@ class Hla(HighLevelAnalyzer):
             0x21: self.generic_request,
             0x42: self.accessory_decoder_information_request,
             0x52: self.accessory_decoder_operation_request,
+            0x92: self.emergency_stop_loco,
             0xE3: self.locomotive_function_instructions,
             0xE4: self.locomotive_instructions,
         }
@@ -445,6 +446,12 @@ class Hla(HighLevelAnalyzer):
 
         return AnalyzerFrame("locomotive_speed_and_direction_operation", self.start_time, self.end_time,
                              {"address": address, "steps": steps, "direction": direction, "speed": speed})
+
+    def emergency_stop_loco(self):
+        address = get_locomotive_address(self.packet_data[1], self.packet_data[2])
+
+        return AnalyzerFrame("Emergency Stop Loco", self.start_time, self.end_time,
+                             {"address": address})
 
     def locomotive_function_instructions_operation(self):
         address = get_locomotive_address(self.packet_data[2], self.packet_data[3])

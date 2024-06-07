@@ -422,25 +422,41 @@ class Hla(HighLevelAnalyzer):
         address = get_locomotive_address(self.packet_data[2], self.packet_data[3])
         steps = 0
 
+        speed = self.packet_data[4] & 0b1111111
+
+
         if self.packet_data[1] == 0x10:
             steps = 14
         elif self.packet_data[1] == 0x11:
             steps = 27
+            if (speed > 0):
+                bit4 = ((speed & 0b00010000) >> 4)
+                speed &= 0b00001111
+                speed <<= 1
+                speed |= bit4
+                speed -= 3
         elif self.packet_data[1] == 0x12:
             steps = 28
+            if (speed > 0):
+                bit4 = ((speed & 0b00010000) >> 4)
+                speed &= 0b00001111
+                speed <<= 1
+                speed |= bit4
+                speed -= 3
         elif self.packet_data[1] == 0x13:
+            speed -= 1
             steps = 128
 
         direction = "Reverse"
         if (self.packet_data[4] >> 7) & 0b1:
             direction = "Forward"
 
-        speed = self.packet_data[4] & 0b1111111
+        # speed = self.packet_data[4] & 0b1111111
 
         if speed == 1:
             speed = "Emergency stop"
-        elif speed >= 1:
-            speed = speed - 1
+        # elif speed >= 1:
+        #     speed = speed - 1
 
         # TODO check if speed calculation is correct with other speed steps
 

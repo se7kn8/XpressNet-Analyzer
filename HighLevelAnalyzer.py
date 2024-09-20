@@ -444,7 +444,10 @@ class Hla(HighLevelAnalyzer):
                 speed |= bit4
                 speed -= 3
         elif self.packet_data[1] == 0x13:
-            speed -= 1
+            if (speed == 1):
+                speed = "Emergency stop"
+            elif (speed > 1):
+                speed -= 1
             steps = 128
 
         direction = "Reverse"
@@ -453,8 +456,7 @@ class Hla(HighLevelAnalyzer):
 
         # speed = self.packet_data[4] & 0b1111111
 
-        if speed == 1:
-            speed = "Emergency stop"
+        # if speed == 1:
         # elif speed >= 1:
         #     speed = speed - 1
 

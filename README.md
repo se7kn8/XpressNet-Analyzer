@@ -13,6 +13,21 @@ All packets are based on this documentation: [XpressNet-V3.0](https://wiki.rocra
 
 This analyzer is not complete, the table shows the current progress
 
+### Corrected functions
+The function status functions are corrected. They now show if a function is a momentary or toggle function
+The new status requests and responses report the status as follows:
+
+|Char|Function|Description|
+|----|--------|:---------:|
+|M|Momentary function|When on a device the function button is pressed the function is ON, when the button is released the function is OFF again|
+|T|Toggle function|When on a device the function button is pressed this function is ON, when the button is pressed again the function is OFF|
+
+
+![Picture of the analyzer](https://raw.githubusercontent.com/UtFryslan/XpressNet-Analyzer/master/.github/setfunctionstatus.png)
+
+### Changed address representation
+The address representation has changed. If the high byte of the address is 0x00, than the address is between 0 and 99. Only the low byte is used for the address.
+If the high byte not is 0x00, than the address is between 100 and 9999. The address is shown as a readable address by filtering out the MSB 15 and 14.
 
 ### From command station to device:
 _* = Multiple packages of the same type_
@@ -30,14 +45,14 @@ _* = Multiple packages of the same type_
 |Service Mode Response *|Response||
 |Software Version|Response|X|
 |Command station status indication|Response|X|
-|Transfer Errors|Response||
-|Command station busy response|Response||
-|Instruction not supported|Response||
+|Transfer Errors|Response|X|
+|Command station busy response|Response|X|
+|Instruction not supported|Response|X|
 |Accessory Decoder information|Response|X|
-|Locomotive information *|Response||
-|Locomotive is being operated|Response||
-|Function status|Response||
-|Locomotive information (address retrieval)|Response||
+|Locomotive information *|Response|X|
+|Locomotive is being operated|Response|X|
+|Function status|Response|X|
+|Locomotive information (address retrieval)|Response|X|
 |Double Header *|Multiple||
 |MU+DH error||Response||
 
@@ -50,7 +65,7 @@ _* = Multiple packages of the same type_
 |Resume operations|Request|X|
 |Stop operations|Request|X|
 |Stop all locomotives|Request||
-|Emergency stop a locomotive|?||
+|Emergency stop a locomotive|Request|X|
 |Register Mode read|Request||
 |Direct Mode CV read|Request||
 |Paged Mode read|Request||
@@ -63,11 +78,11 @@ _* = Multiple packages of the same type_
 |Set command station power-up mode|?||
 |Accessory Decoder information|Request|X|
 |Accessory Decoder operation|Request|X|
-|Locomotive information|Request||
-|Function status|Request||
+|Locomotive information|Request|X|
+|Function status|Request|X|
 |Locomotive speed and direction|Instructions|X|
 |Function operation|Instructions|X|
-|Set function state|?||
+|Set function state|Instructions|X|
 |Double header *|Multiple||
 |Operations Mode programming byte mode write|Request||
 |Operations Mode programming bit mode write|Request||
